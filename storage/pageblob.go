@@ -41,9 +41,7 @@ func PutPage(ctx context.Context, accountName, accountGroupName, containerName, 
 	b := getPageBlobURL(ctx, accountName, accountGroupName, containerName, blobName)
 
 	newPage := make([]byte, azblob.PageBlobPageBytes)
-	for i, c := range []byte(page) {
-		newPage[i] = c
-	}
+	copy(newPage, page)
 
 	_, err := b.UploadPages(ctx, int64(pages*azblob.PageBlobPageBytes),
 		bytes.NewReader(newPage),
@@ -59,7 +57,7 @@ func ClearPage(ctx context.Context, accountName, accountGroupName, containerName
 
 	_, err := b.ClearPages(ctx,
 		int64(pageNumber*azblob.PageBlobPageBytes),
-		int64((pageNumber+1)*azblob.PageBlobPageBytes-1),
+		int64(azblob.PageBlobPageBytes),
 		azblob.PageBlobAccessConditions{},
 	)
 	return err

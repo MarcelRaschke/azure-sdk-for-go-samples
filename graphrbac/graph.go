@@ -2,6 +2,7 @@ package graphrbac
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/config"
@@ -74,8 +75,8 @@ func AddClientSecret(ctx context.Context, objID string) (autorest.Response, erro
 		graphrbac.PasswordCredentialsUpdateParameters{
 			Value: &[]graphrbac.PasswordCredential{
 				{
-					StartDate: &date.Time{time.Now()},
-					EndDate:   &date.Time{time.Date(2018, time.December, 20, 22, 0, 0, 0, time.UTC)},
+					StartDate: &date.Time{Time: time.Now()},
+					EndDate:   &date.Time{Time: time.Date(2018, time.December, 20, 22, 0, 0, 0, time.UTC)},
 					Value:     to.StringPtr("052265a2-bdc8-49aa-81bd-ecf7e9fe0c42"), // this will become the client secret! Record this value, there is no way to get it back
 					KeyID:     to.StringPtr("08023993-9209-4580-9d4a-e060b44a64b8"),
 				},
@@ -112,4 +113,18 @@ func CreateADGroup(ctx context.Context) (graphrbac.ADGroup, error) {
 func DeleteADGroup(ctx context.Context, groupObjID string) (autorest.Response, error) {
 	groupClient := getADGroupsClient()
 	return groupClient.Delete(ctx, groupObjID)
+}
+
+// GetServicePrincipalObjectID returns the service principal object ID for the specified client ID.
+func GetServicePrincipalObjectID(ctx context.Context, clientID string) (string, error) {
+	spClient := getServicePrincipalsClient()
+	page, err := spClient.List(ctx, fmt.Sprintf("servicePrincipalNames/any(c:c eq '%s')", clientID))
+	if err != nil {
+		return "", err
+	}
+	servicePrincipals := page.Values()
+	if len(servicePrincipals) == 0 {
+		return "", fmt.Errorf("didn't find any service principals for client ID %s", clientID)
+	}
+	return *servicePrincipals[0].ObjectID, nil
 }

@@ -7,8 +7,8 @@ package resources
 
 import (
 	"context"
-	"go/build"
 	"log"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -16,7 +16,7 @@ import (
 	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/util"
 )
 
-func ExampleCreateTemplateDeployment() {
+func Example_createTemplateDeployment() {
 	groupName := config.GenerateGroupName("groups-template")
 	config.SetGroupName(groupName) // TODO: don't rely on globals
 	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
@@ -25,13 +25,12 @@ func ExampleCreateTemplateDeployment() {
 
 	_, err := CreateGroup(ctx, config.GroupName())
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 
-	gopath := build.Default.GOPATH
-	repo := filepath.Join("github.com", "Azure-Samples", "azure-sdk-for-go-samples")
-	templateFile := filepath.Join(gopath, "src", repo, "resources", "testdata", "template.json")
-	parametersFile := filepath.Join(gopath, "src", repo, "resources", "testdata", "parameters.json")
+	wd, _ := os.Getwd()
+	templateFile := filepath.Join(wd, "testdata", "template.json")
+	parametersFile := filepath.Join(wd, "testdata", "parameters.json")
 	deployName := "VMdeploy"
 
 	template, err := util.ReadJSON(templateFile)
@@ -45,13 +44,13 @@ func ExampleCreateTemplateDeployment() {
 
 	_, err = ValidateDeployment(ctx, deployName, template, params)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("validated VM template deployment")
 
 	_, err = CreateDeployment(ctx, deployName, template, params)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("created VM template deployment")
 
@@ -59,19 +58,19 @@ func ExampleCreateTemplateDeployment() {
 	vmUser := (*params)["vm_user"].(map[string]interface{})["value"].(string)
 	vmPass := (*params)["vm_password"].(map[string]interface{})["value"].(string)
 
-	resource, err := GetResource(ctx,
+	r, err := GetResource(ctx,
 		"Microsoft.Network",
 		"publicIPAddresses",
 		ipName,
 		"2018-01-01")
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("got public IP info via get generic resource")
 
 	log.Printf("Log in with ssh: %s@%s, password: %s",
 		vmUser,
-		resource.Properties.(map[string]interface{})["ipAddress"].(string),
+		r.Properties.(map[string]interface{})["ipAddress"].(string),
 		vmPass)
 
 	// Output:

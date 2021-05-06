@@ -10,10 +10,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/cognitiveservices/mgmt/2017-04-18/cognitiveservices"
-
 	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/config"
 	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/iam"
+	"github.com/Azure/azure-sdk-for-go/services/cognitiveservices/mgmt/2017-04-18/cognitiveservices"
+	"github.com/Azure/go-autorest/autorest/to"
 )
 
 func getCognitiveSevicesManagementClient() cognitiveservices.AccountsClient {
@@ -34,7 +34,7 @@ func getFirstKey(accountName string) string {
 }
 
 //CreateCSAccount creates a Cognitive Services account of the specified type
-func CreateCSAccount(accountName string, accountKind cognitiveservices.Kind) (*cognitiveservices.Account, error) {
+func CreateCSAccount(accountName string, accountKind string) (*cognitiveservices.Account, error) {
 	managementClient := getCognitiveSevicesManagementClient()
 	location := "global"
 
@@ -42,14 +42,14 @@ func CreateCSAccount(accountName string, accountKind cognitiveservices.Kind) (*c
 		context.Background(),
 		config.GroupName(),
 		accountName,
-		cognitiveservices.AccountCreateParameters{
-			Kind: accountKind,
+		cognitiveservices.Account{
+			Kind: &accountKind,
 			Sku: &cognitiveservices.Sku{
-				Name: "S1",
+				Name: to.StringPtr("S1"),
 				Tier: cognitiveservices.Standard,
 			},
 			Location:   &location,
-			Properties: &map[string]interface{}{},
+			Properties: nil,
 		})
 	if err != nil {
 		return nil, err

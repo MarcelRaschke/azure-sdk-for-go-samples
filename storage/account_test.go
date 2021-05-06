@@ -10,11 +10,12 @@ import (
 	"log"
 	"time"
 
+	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/config"
 	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/util"
 	"github.com/Azure-Samples/azure-sdk-for-go-samples/resources"
 )
 
-func ExampleStorageAccountOperations() {
+func Example_storageAccountOperations() {
 	var groupName = testAccountGroupName
 	var accountName = testAccountName
 
@@ -25,19 +26,19 @@ func ExampleStorageAccountOperations() {
 
 	_, err := resources.CreateGroup(ctx, groupName)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 
 	_, err = resources.RegisterProvider(ctx, "Microsoft.Storage")
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("registered resource provider")
 
 	result, err := CheckAccountNameAvailability(ctx, accountName)
 	log.Printf("[%T]: %+v\n", result, result)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("checked for account availability")
 
@@ -58,43 +59,43 @@ func ExampleStorageAccountOperations() {
 
 	_, err = GetStorageAccount(ctx, accountName, groupName)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("got storage account details")
 
 	_, err = UpdateAccount(ctx, accountName, groupName)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("updated storage account")
 
 	_, err = ListAccountsByResourceGroup(ctx, groupName)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("listed storage accounts in resource group")
 
 	_, err = ListAccountsBySubscription(ctx)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("listed storage accounts in subscription")
 
 	_, err = GetAccountKeys(ctx, accountName, groupName)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("get storage account keys")
 
-	_, err = RegenerateAccountKey(ctx, accountName, groupName, 0)
+	_, err = RegenerateAccountKey(ctx, accountName, groupName, 1)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
-	util.PrintAndLog("regenerated first storage account key")
+	util.PrintAndLog("regenerated second storage account key")
 
-	_, err = ListUsage(ctx)
+	_, err = ListUsage(ctx, config.Location())
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("listed usage")
 
@@ -107,6 +108,6 @@ func ExampleStorageAccountOperations() {
 	// listed storage accounts in resource group
 	// listed storage accounts in subscription
 	// get storage account keys
-	// regenerated first storage account key
+	// regenerated second storage account key
 	// listed usage
 }

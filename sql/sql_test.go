@@ -11,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -20,7 +19,7 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 
 	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/config"
-	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/iam"
+	"github.com/Azure-Samples/azure-sdk-for-go-samples/internal/util"
 	"github.com/Azure-Samples/azure-sdk-for-go-samples/resources"
 
 	"github.com/marstr/randname"
@@ -37,13 +36,7 @@ func addLocalEnvAndParse() error {
 	// parse env at top-level (also controls dotenv load)
 	err := config.ParseEnvironment()
 	if err != nil {
-		return fmt.Errorf("failed to add top-level env: %v\n", err.Error())
-	}
-
-	// add local env
-	vnetNameFromEnv := os.Getenv("AZURE_VNET_NAME")
-	if len(vnetNameFromEnv) > 0 {
-		testVnetName = vnetNameFromEnv
+		return fmt.Errorf("failed to add top-level env: %+v", err)
 	}
 	return nil
 }
@@ -52,7 +45,7 @@ func addLocalFlagsAndParse() error {
 	// add top-level flags
 	err := config.AddFlags()
 	if err != nil {
-		return fmt.Errorf("failed to add top-level flags: %v\n", err.Error())
+		return fmt.Errorf("failed to add top-level flags: %+v", err)
 	}
 
 	flag.StringVar(&serverName, "sqlServerName", serverName, "Name for SQL server.")
@@ -102,7 +95,7 @@ func TestMain(m *testing.M) {
 
 	err = setup()
 	if err != nil {
-		log.Fatalf("could not set up environment: %v\n", err)
+		log.Fatalf("could not set up environment: %+v", err)
 	}
 
 	code = m.Run()
@@ -117,9 +110,9 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// Example creates a SQL server and database, then creates a table and inserts a record.
-func ExampleCreateDatabase() {
-	const groupName = config.GenerateGroupName("DatabaseQueries")
+// Example_createDatabase creates a SQL server and database, then creates a table and inserts a record.
+func Example_createDatabase() {
+	var groupName = config.GenerateGroupName("DatabaseQueries")
 	config.SetGroupName(groupName)
 
 	serverName = strings.ToLower(serverName)
@@ -129,30 +122,30 @@ func ExampleCreateDatabase() {
 
 	_, err := resources.CreateGroup(ctx, config.GroupName())
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 
 	_, err = CreateServer(ctx, serverName, dbLogin, dbPassword)
 	if err != nil {
-		util.PrintAndLog(fmt.Sprintf("cannot create sql server: %v", err))
+		util.LogAndPanic(fmt.Errorf("cannot create sql server: %+v", err))
 	}
 	util.PrintAndLog("sql server created")
 
 	_, err = CreateDB(ctx, serverName, dbName)
 	if err != nil {
-		util.PrintAndLog(fmt.Sprintf("cannot create sql database: %v", err))
+		util.LogAndPanic(fmt.Errorf("cannot create sql database: %+v", err))
 	}
 	util.PrintAndLog("database created")
 
 	err = CreateFirewallRules(ctx, serverName)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("database firewall rules set")
 
-	err = TestSQLDataplane(serverName, dbName, dbLogin, dbPassword)
+	err = testSQLDataplane(serverName, dbName, dbLogin, dbPassword)
 	if err != nil {
-		util.PrintAndLog(err.Error())
+		util.LogAndPanic(err)
 	}
 	util.PrintAndLog("database operations performed")
 
@@ -163,8 +156,8 @@ func ExampleCreateDatabase() {
 	// database operations performed
 }
 
-// TestSQLDataplane executes some simple SQL queries
-func TestSQLDataplane(server, database, username, password string) error {
+// testSQLDataplane executes some simple SQL queries
+func testSQLDataplane(server, database, username, password string) error {
 	log.Printf("available drivers: %v", sql.Drivers())
 
 	db, err := Open(server, database, username, password)
